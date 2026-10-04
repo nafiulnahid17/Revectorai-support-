@@ -1,0 +1,1006 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07111d"><title>ReVector — Admin / Support Console</title><link rel="icon" href="/assets/mark.svg" type="image/svg+xml"><style>/* System fallback keeps the workspace functional without third-party network requests. */
+@font-face {
+  font-family: Inter;
+  src: local("Inter");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --ink: #e0e8f0;
+  --muted: #92a5ba;
+  --border: #2c3c50;
+  --panel: #102136;
+  --surface: #07111d;
+  --brand: #dfbb74;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--ink);
+}
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 18px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+a {
+  color: var(--brand);
+}
+input,
+select,
+textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #bfa266;
+  outline-offset: 3px;
+}
+.primary {
+  background: linear-gradient(120deg, #e0bc72, #be9850);
+  border-color: #c7a15b;
+  color: #131a20;
+  font-weight: 700;
+}
+.muted {
+  color: var(--muted);
+}
+.section-kicker {
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-size: 10px;
+}
+.account-form > fieldset {
+  display: grid;
+  gap: 16px;
+}
+
+.account-layout {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top right, #16293e, #07111d 65%);
+}
+.account-layout > header {
+  height: 80px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: #091523;
+}
+.console-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 20px;
+}
+.console-brand small {
+  display: block;
+  font-size: 10px;
+  color: #bfa266;
+  letter-spacing: 1.5px;
+  margin-top: 5px;
+}
+.gold-mark {
+  height: 38px;
+  width: 38px;
+  border: 1px solid #947742;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #d9b773;
+  font-weight: 700;
+  background: #29251e;
+}
+.account-layout header .right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.account-shell {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  min-height: calc(100vh - 80px);
+}
+.account-nav {
+  background: #091523;
+  border-right: 1px solid var(--border);
+  padding: 30px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.account-nav a {
+  color: #a4b3c4;
+  text-decoration: none;
+  border: 1px solid transparent;
+  padding: 13px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.account-nav a:hover {
+  background: #17283c;
+}
+.account-nav a.active {
+  color: #e7c584;
+  background: linear-gradient(100deg, #322a1d, #18212b);
+  border-color: #72613e;
+}
+.account-main {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 35px 42px;
+  align-self: start;
+  min-width: 0;
+}
+.account-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+  gap: 16px;
+}
+.account-heading h1 {
+  font-size: 27px;
+  margin: 8px 0;
+}
+.account-heading .section-kicker {
+  font-size: 10px;
+}
+.account-card {
+  background: linear-gradient(140deg, #102136, #0b1828);
+  border: 1px solid #2c3c50;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 22px;
+  box-shadow: 0 6px 25px #0002;
+  min-width: 0;
+}
+.account-card h2 {
+  font-size: 17px;
+  margin: 0 0 20px;
+}
+.account-card p {
+  line-height: 1.65;
+  color: #aab9c8;
+}
+.account-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.account-metrics section {
+  padding: 23px;
+  border: 1px solid #504932;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #1b2632, #101c2b);
+}
+.account-metrics small {
+  display: block;
+  color: #a6b2c1;
+  text-transform: capitalize;
+  margin-bottom: 15px;
+}
+.account-metrics strong {
+  font-size: 29px;
+  color: #edce91;
+}
+.account-form {
+  display: grid;
+  gap: 16px;
+  max-width: 700px;
+}
+.account-form button[type="submit"] {
+  justify-self: start;
+  margin-top: 8px;
+}
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #abbacd;
+}
+.account-field input,
+.account-field select,
+.account-field textarea {
+  background: #071322;
+  padding: 12px;
+  border-color: #33455b;
+  width: 100%;
+  font-size: 13px;
+}
+.account-field textarea {
+  resize: vertical;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.6;
+}
+.account-empty {
+  border: 1px dashed #3a4b60;
+  border-radius: 9px;
+  padding: 30px 22px;
+  color: #97a8bd;
+  text-align: center;
+  font-size: 13px;
+  margin: 15px 0;
+}
+.balance-value {
+  font-size: 40px;
+  color: #e9c889;
+}
+.balance-value small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.table-scroll {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid #2b3b51;
+  border-radius: 8px;
+}
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.account-table th {
+  background: #12243a;
+  color: #aabace;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-size: 10px;
+  padding: 14px;
+}
+.account-table td {
+  padding: 15px 14px;
+  border-top: 1px solid #29384b;
+  max-width: 330px;
+  overflow-wrap: anywhere;
+}
+.account-table small {
+  display: block;
+  color: #7f93ab;
+  font-size: 10px;
+  margin-top: 7px;
+}
+.account-table button {
+  font-size: 11px;
+  padding: 6px 10px;
+}
+.account-badge {
+  display: inline-block;
+  font-size: 10px;
+  border-radius: 5px;
+  border: 1px solid #41556b;
+  padding: 4px 6px;
+  color: #aac3d7;
+  background: #17293b;
+  white-space: nowrap;
+}
+.account-error {
+  padding: 14px;
+  border: 1px solid #794958;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.account-notice {
+  padding: 14px;
+  color: #91d6b8;
+  border: 1px solid #335b50;
+  border-radius: 8px;
+  background: #102b26;
+}
+.account-login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+  background: radial-gradient(ellipse at top, #1a2e46, #06101c 75%);
+}
+.login-card {
+  width: min(440px, 100%);
+  padding: 34px;
+  background: #0e1c2d;
+  border: 1px solid #4a4737;
+  border-radius: 14px;
+  box-shadow: 0 20px 90px #0007;
+}
+.login-card h1 {
+  font-size: 25px;
+  letter-spacing: -0.5px;
+}
+.login-card p {
+  line-height: 1.6;
+}
+.login-card > a {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 12px;
+}
+.login-card .account-form {
+  margin-top: 25px;
+}
+.admin-console .account-nav {
+  background: #09111d;
+}
+.admin-console > header {
+  background: #101a29;
+  border-bottom-color: #6a5736;
+}
+.admin-console .account-main {
+  max-width: 1600px;
+}
+.admin-console .account-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.admin-login .login-card {
+  border-color: #806743;
+}
+.account-details {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 15px;
+  color: #b6c4d2;
+}
+.account-details dt {
+  text-transform: capitalize;
+}
+.account-details dd {
+  margin: 0;
+  color: #eed197;
+}
+.ticket-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.ticket-thread article {
+  padding: 17px;
+  background: #071625;
+  border: 1px solid #324358;
+  border-radius: 9px;
+}
+.ticket-thread p {
+  white-space: pre-wrap;
+}
+.ticket-thread small {
+  color: #8798ad;
+}
+.account-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 22px 0;
+}
+.button {
+  display: inline-block;
+  padding: 12px 16px;
+  text-decoration: none;
+  border-radius: 8px;
+}
+@media (max-width: 1100px) {
+  .account-shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .account-main {
+    padding: 25px;
+  }
+  .account-metrics {
+    gap: 10px;
+  }
+  .account-metrics section {
+    padding: 18px;
+  }
+  .account-metrics strong {
+    font-size: 23px;
+  }
+}
+@media (max-width: 700px) {
+  .account-layout > header {
+    padding: 0 14px;
+    height: 70px;
+  }
+  .console-brand {
+    font-size: 16px;
+  }
+  .console-brand small {
+    font-size: 8px;
+  }
+  .account-shell {
+    display: block;
+  }
+  .account-nav {
+    flex-direction: row;
+    overflow: auto;
+    padding: 10px;
+    border-right: 0;
+  }
+  .account-nav a {
+    white-space: nowrap;
+    padding: 10px;
+  }
+  .account-main {
+    padding: 18px 12px;
+  }
+  .account-card {
+    padding: 18px;
+  }
+  .account-metrics,
+  .admin-console .account-metrics {
+    grid-template-columns: 1fr;
+  }
+  .account-details {
+    grid-template-columns: 1fr;
+  }
+  .account-heading h1 {
+    font-size: 22px;
+  }
+  .account-layout header .right {
+    gap: 8px;
+  }
+  .account-layout header .right > .account-badge {
+    display: none;
+  }
+}
+.account-form > fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+</style></head><body><div id="app"><div class="account-login admin-login"><a class="console-brand" href="/" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI</strong></a><section class="login-card"><div class="section-kicker">Support & Operations Console</div><h1>Admin Sign In</h1><p class="muted">Authorized administrators and support staff only.</p><form class="account-form" data-account-form="admin-login"><fieldset ><label class="account-field"><span>Admin Email</span><input name="email" type="email" value="" required autocomplete="username"></label><label class="account-field"><span>Password</span><input name="password" type="password" value="" required autocomplete="current-password"></label><button class="primary" type="submit" >Sign In to Admin Console</button></fieldset></form></section></div></div><noscript>Enable JavaScript to use the Admin / Support console.</noscript><script>
+(() => {
+  // src/model.js
+  var account = {
+    configured: null,
+    adminProfile: null,
+    busy: false,
+    error: "",
+    notice: "",
+    data: {},
+    ticket: null,
+    messages: [],
+    offset: 0,
+    editUser: null,
+    editModel: null
+  };
+  var adminPages = [
+    ["overview", "Overview"],
+    ["users", "Users"],
+    ["wallets", "Wallet / Balances"],
+    ["credits", "Credit Requests"],
+    ["usage", "Usage Logs"],
+    ["models", "Model Requests"],
+    ["support", "Support Inbox"],
+    ["audit", "Audit Log"],
+    ["settings", "Settings"]
+  ];
+  function currentPath() {
+    return typeof location !== "undefined" ? location.pathname : "/admin/login";
+  }
+  function accountPage() {
+    return currentPath() === "/admin/login" ? "admin-login" : currentPath().split("/")[2] || "overview";
+  }
+
+  // src/views.js
+  var escape = (value) => String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+  );
+  var e = escape;
+  var money = (v) => v == null ? "Unavailable" : Number(v).toLocaleString(void 0, { maximumFractionDigits: 4 });
+  var date = (v) => v ? e(new Date(v).toLocaleString()) : "\u2014";
+  var field = (label, name, type = "text", value = "", extra = "") => `<label class="account-field"><span>${label}</span><input name="${name}" type="${type}" value="${e(value || "")}" ${extra}></label>`;
+  var area = (label, name, extra = "") => `<label class="account-field"><span>${label}</span><textarea name="${name}" rows="3" required maxlength="4000" ${extra}></textarea></label>`;
+  var select = (label, name, choices, value = "") => `<label class="account-field"><span>${label}</span><select name="${name}">${choices.map(([key, label2]) => `<option value="${e(key)}" ${key === value ? "selected" : ""}>${e(label2)}</option>`).join("")}</select></label>`;
+  var button = (label, action, extra = "") => `<button type="button" data-account="${action}" ${extra}>${label}</button>`;
+  var submit = (label) => `<button class="primary" type="submit" ${account.busy ? "disabled" : ""}>${account.busy ? "Saving\u2026" : label}</button>`;
+  var form = (name, body, label) => `<form class="account-form" data-account-form="${name}"><fieldset ${account.busy ? "disabled" : ""}>${body}${submit(label)}</fieldset></form>`;
+  var panel = (title, content) => `<section class="account-card"><h2>${title}</h2>${content}</section>`;
+  var empty = (message) => `<div class="account-empty">${message}</div>`;
+  function table(headers, rows) {
+    return rows.length ? `<div class="table-scroll"><table class="account-table"><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : empty("No records yet.");
+  }
+  var badge = (status) => `<span class="account-badge">${e(status || "\u2014")}</span>`;
+  function login(admin) {
+    return `<div class="account-login ${admin ? "admin-login" : ""}"><a class="console-brand" href="/" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI</strong></a><section class="login-card"><div class="section-kicker">${admin ? "Support & Operations Console" : "Invite-only account"}</div><h1>${admin ? "Admin Sign In" : "Welcome to ReVector"}</h1><p class="muted">${admin ? "Authorized administrators and support staff only." : "Sign in with your invited account to access your production workspace."}</p>${account.configured === false ? empty("Account services are not configured. Contact the owner to enable Supabase Auth.") : form(admin ? "admin-login" : "login", field(admin ? "Admin Email" : "Email", "email", "email", "", 'required autocomplete="username"') + field("Password", "password", "password", "", 'required autocomplete="current-password"'), admin ? "Sign In to Admin Console" : "Sign In")}${account.error ? `<p role="alert" class="account-error">${e(account.error)}</p>` : ""}${!admin ? '<a href="/" data-account="nav">Return to production workspace</a>' : ""}</section></div>`;
+  }
+  function usage(items, admin = false) {
+    return table(
+      [
+        ...admin ? ["User"] : [],
+        "Operation / Project",
+        "Provider / Model",
+        "Mode / Status",
+        "Provider cost",
+        "Credits",
+        "Time"
+      ],
+      items.filter((v) => v.status !== "RESERVED").map((v) => [
+        ...admin ? [e(v.user_id)] : [],
+        `${e(v.operation)}<small>${e(v.project_id || "No project")}</small>`,
+        `${e(v.provider || "Not reported")}<small>${e(v.model || "Not reported")}</small>`,
+        `${badge(v.processing_mode)} ${badge(v.status)}`,
+        v.estimated_usd_cost == null ? v.processing_mode === "DETERMINISTIC" ? "Not applicable" : "Unavailable" : `$${Number(v.estimated_usd_cost).toFixed(6)}<small>${e(v.cost_source)} \xB7 ${e(v.pricing_version || "")}</small>`,
+        money(v.credits_charged),
+        date(v.created_at)
+      ])
+    );
+  }
+  function tickets(items, admin = false) {
+    return table(
+      admin ? ["User", "Subject / Category / Priority", "Status", "Created", ""] : ["Subject / Category", "Status", "Reply", "Updated", ""],
+      items.map(
+        (v) => admin ? [
+          `${e(v.revector_profiles?.name || v.user_id)}<small>${e(v.revector_profiles?.email || "")}</small>`,
+          `${e(v.subject)}<small>${e(v.category || "OTHER")} \xB7 ${e(v.payload?.priority || "NORMAL")}</small>`,
+          badge(v.status),
+          date(v.created_at),
+          button("Open", "ticket", `data-id="${e(v.id)}"`)
+        ] : [
+          `${e(v.subject)}<small>${e(v.category)}</small>`,
+          badge(v.status),
+          e(v.admin_response || "Awaiting reply"),
+          date(v.updated_at),
+          button("Open", "ticket", `data-id="${e(v.id)}"`)
+        ]
+      )
+    );
+  }
+  function conversation(admin) {
+    const t = account.ticket;
+    if (!t) return "";
+    return panel(
+      e(t.subject),
+      `<div class="ticket-thread"><article><strong>Original request</strong><p>${e(t.payload?.message || "")}</p><small>${date(t.created_at)}</small></article>${account.messages.map((m) => `<article><strong>${e(m.author_role === "USER" ? "User" : "ReVector Support")}</strong><p>${e(m.message)}</p><small>${date(m.created_at)}</small></article>`).join("")}</div>${form(
+        admin ? "support-reply" : "support-message",
+        `<input type="hidden" name="request_id" value="${e(t.id)}">` + area("Reply", "message") + (admin ? select(
+          "Ticket status",
+          "status",
+          [
+            ["OPEN", "Open"],
+            ["IN_PROGRESS", "In Progress"],
+            ["RESOLVED", "Resolved"],
+            ["CLOSED", "Closed"]
+          ],
+          t.status
+        ) : ""),
+        admin ? "Send Support Reply" : "Send Message"
+      )}${button("Close conversation", "close-ticket")}`
+    );
+  }
+  function adminContent(page) {
+    const d = account.data, items = d.items || [];
+    if (page === "overview")
+      return `<div class="account-metrics">${Object.entries(d).filter(([k, v]) => typeof v === "number" || v === null).map(
+        ([k, v]) => `<section><small>${e(k.replaceAll("_", " "))}</small><strong>${money(v)}</strong></section>`
+      ).join("") || empty("No operational data loaded.")}</div>` + panel(
+        "Support & Operations",
+        "<p>Global reports are available only in this console. Wallet changes use append-only ledger transactions and audited reasons.</p>"
+      );
+    if (page === "users")
+      return panel(
+        "Users",
+        table(
+          ["User", "Role", "Status", "Created", "Actions"],
+          items.map((v) => [
+            `${e(v.name || v.email)}<small>${e(v.id)}</small>`,
+            badge(v.role),
+            badge(v.status),
+            date(v.created_at),
+            button("Change Status", "edit-status", `data-id="${e(v.id)}"`)
+          ])
+        )
+      ) + (account.editUser ? panel(
+        "Account status",
+        form(
+          "status",
+          `<input type="hidden" name="user_id" value="${e(account.editUser)}">` + select("Status", "status", [
+            ["ACTIVE", "Active"],
+            ["SUSPENDED", "Suspended"],
+            ["DISABLED", "Disabled"]
+          ]) + area("Reason", "reason", 'maxlength="1000"'),
+          "Apply Status"
+        )
+      ) : "");
+    if (page === "wallets")
+      return panel(
+        "Balances",
+        table(
+          ["User ID", "Balance", "Reserved", "Action"],
+          items.map((v) => [
+            e(v.user_id),
+            money(v.current_credit_balance),
+            money(v.reserved_credits),
+            button("Adjust", "edit-wallet", `data-id="${e(v.user_id)}"`)
+          ])
+        )
+      ) + panel(
+        "Audited Wallet Adjustment",
+        form(
+          "adjust",
+          field(
+            "User ID",
+            "user_id",
+            "text",
+            account.editUser || "",
+            "required"
+          ) + field(
+            "Credits delta (negative to deduct)",
+            "delta",
+            "number",
+            "",
+            'required min="-1000000" max="1000000" step="0.0001"'
+          ) + area("Required reason", "reason", 'maxlength="1000"'),
+          "Record Adjustment"
+        )
+      );
+    if (["credits", "models"].includes(page))
+      return panel(
+        page === "credits" ? "Credit Requests" : "Model Requests",
+        table(
+          ["User", "Request", "Status", "Response", "Actions"],
+          items.map((v) => [
+            e(v.user_id),
+            e(
+              v.type === "TOPUP" ? v.payload.requested_credits + " credits" : v.payload.desired_model
+            ),
+            badge(v.status),
+            e(v.admin_response || "\u2014"),
+            v.status === "PENDING" ? button("Review", "review-request", `data-id="${e(v.id)}"`) : "\u2014"
+          ])
+        )
+      ) + (account.ticket ? panel(
+        "Review Request",
+        form(
+          "decision",
+          `<input type="hidden" name="request_id" value="${e(account.ticket.id)}">` + select("Decision", "decision", [
+            ["APPROVED", "Approve"],
+            ["REJECTED", "Reject"],
+            ["REPLY", "Reply without changing status"]
+          ]) + (page === "models" ? select("Approved catalog model", "model_id", [
+            ["", "Choose approved model"],
+            ...(d.catalog || []).map((m) => [m.id, m.display_name])
+          ]) : "") + area("Response / reason", "response"),
+          "Record Decision"
+        )
+      ) : "");
+    if (page === "usage") return panel("Global Usage", usage(items, true));
+    if (page === "support")
+      return conversation(true) + panel("Support Inbox", tickets(items, true));
+    if (page === "audit")
+      return panel(
+        "Append-only Audit Log",
+        table(
+          ["Actor", "Action", "Target", "Reason", "Time"],
+          items.map((v) => [
+            e(v.admin_user_id),
+            e(v.action),
+            e(v.target),
+            e(v.reason),
+            date(v.created_at)
+          ])
+        )
+      );
+    if (page === "settings")
+      return panel(
+        "Control Backend Settings",
+        `<dl class="account-details">${Object.entries(d.settings || {}).map(
+          ([key, value]) => `<dt>${e(key.replaceAll("_", " "))}</dt><dd>${e(value == null ? "Not configured" : String(value))}</dd>`
+        ).join(
+          ""
+        )}</dl><p class="muted">Engine and production secrets are managed separately. This console cannot change Railway settings.</p>`
+      ) + panel(
+        "Model Catalog",
+        table(
+          ["Model", "Enabled", "Pricing version", ""],
+          (d.catalog || []).map((m) => [
+            `${e(m.display_name)}<small>${e(m.model_id)}</small>`,
+            e(String(m.enabled)),
+            e(m.pricing_version),
+            button("Configure", "edit-model", `data-id="${e(m.id)}"`)
+          ])
+        )
+      ) + (account.editModel ? panel(
+        "Catalog Pricing",
+        form(
+          "catalog",
+          `<input type="hidden" name="model_id" value="${e(account.editModel.id)}">` + select(
+            "Availability",
+            "enabled",
+            [
+              ["true", "Enabled"],
+              ["false", "Disabled"]
+            ],
+            String(account.editModel.enabled)
+          ) + field(
+            "Pricing version",
+            "pricing_version",
+            "text",
+            account.editModel.pricing_version,
+            "required"
+          ) + area(
+            "Operation prices in USD (JSON object)",
+            "operation_prices"
+          ) + area("Change reason", "reason"),
+          "Save Catalog"
+        )
+      ) : "");
+    return empty("This console page does not exist.");
+  }
+  function accountMarkup() {
+    const page = accountPage();
+    if (page === "admin-login" || !account.adminProfile) return login(true);
+    const profile = account.adminProfile;
+    const pages = profile.role === "SUPPORT" ? adminPages.filter(([key]) => key === "support") : adminPages;
+    return `<div class="account-layout admin-console"><header><a class="console-brand" href="/admin" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI<small>ADMIN CONSOLE \xB7 Support & Operations</small></strong></a><div class="right">${badge(profile.role)}${button("Sign Out", "admin-logout")}</div></header><div class="account-shell"><nav class="account-nav" aria-label="Admin navigation">${pages.map(([route, label]) => `<a href="/admin/${route}" class="${page === route ? "active" : ""}" data-account="nav">${label}</a>`).join("")}</nav><main class="account-main"><div class="account-heading"><div><div class="section-kicker">Operations & Support</div><h1>${e(pages.find(([r]) => r === page)?.[1] || page)}</h1></div>${button("Refresh", "refresh")}</div>${account.error ? `<p class="account-error" role="alert">${e(account.error)}</p>` : ""}${account.notice ? `<p class="account-notice" role="status">${e(account.notice)}</p>` : ""}${account.busy ? '<p role="status">Loading operations data\u2026</p>' : ""}${account.configured === false ? empty("Supabase configuration is required before sign in.") : adminContent(page)}${["usage", "support", "credits", "models", "users", "wallets", "audit"].includes(page) ? `<div class="account-pager">${button("Previous", "previous", account.offset === 0 ? "disabled" : "")}<span>Page ${account.offset / 50 + 1}</span>${button("Next", "next", (account.data.items || []).length < 50 ? "disabled" : "")}</div>` : ""}</main></div></div>`;
+  }
+
+  // src/controller.js
+  var redraw = () => {
+  };
+  function registerRenderer(renderer) {
+    redraw = renderer;
+  }
+  async function request(path, method = "GET", body) {
+    let response;
+    try {
+      response = await fetch(path, {
+        method,
+        credentials: "same-origin",
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : void 0,
+        signal: AbortSignal.timeout(12e3)
+      });
+    } catch {
+      throw new Error(
+        navigator.onLine ? "Operations service could not be reached. Retry when connected." : "No internet connection. Changes have not been submitted."
+      );
+    }
+    const raw = await response.text();
+    if (raw.length > 1024 * 1024)
+      throw new Error("Operations response is too large.");
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error("Operations service returned an invalid response.");
+    }
+    if (!response.ok)
+      throw Object.assign(
+        new Error(data.error?.message || "Operations request failed."),
+        { status: response.status }
+      );
+    return data;
+  }
+  async function guarded(work) {
+    if (account.busy) return;
+    account.busy = true;
+    account.error = "";
+    redraw();
+    try {
+      return await work();
+    } catch (error) {
+      account.error = error.message;
+      if (error.status === 401) {
+        account.adminProfile = null;
+        history.replaceState({}, "", "/admin/login");
+      }
+    } finally {
+      account.busy = false;
+      redraw();
+    }
+  }
+  async function load() {
+    const page = accountPage();
+    if (page === "admin-login" || !account.adminProfile) return;
+    if (account.adminProfile.role === "SUPPORT" && page !== "support") {
+      history.replaceState({}, "", "/admin/support");
+    }
+    const route = accountPage(), offset = "?offset=" + account.offset;
+    if (route === "settings") {
+      const [settings, models] = await Promise.all([
+        request("/api/admin/settings"),
+        request("/api/admin/models")
+      ]);
+      account.data = { settings, catalog: models.items };
+    } else if (["credits", "models"].includes(route)) {
+      const [requests, models] = await Promise.all([
+        request(
+          "/api/admin/requests" + offset + "&type=" + (route === "credits" ? "TOPUP" : "MODEL_CHANGE")
+        ),
+        request("/api/admin/models")
+      ]);
+      account.data = { items: requests.items, catalog: models.items };
+    } else account.data = await request("/api/admin/" + route + offset);
+  }
+  async function initialize() {
+    await guarded(async () => {
+      account.configured = (await request("/api/admin/bootstrap")).configured;
+      if (!account.configured) return;
+      if (currentPath() !== "/admin/login")
+        account.adminProfile = (await request("/api/admin/session")).profile;
+      await load();
+    });
+  }
+  async function navigate(path) {
+    if (!/^\/admin(?:\/[a-z-]+)?$/.test(path) || account.busy) return;
+    history.pushState({}, "", path);
+    account.notice = "";
+    account.ticket = null;
+    account.editUser = null;
+    account.editModel = null;
+    account.offset = 0;
+    account.data = {};
+    await guarded(load);
+  }
+  async function click(target) {
+    if (account.busy) return;
+    const action = target.dataset.account;
+    if (action === "nav")
+      return navigate(new URL(target.href, location.origin).pathname);
+    if (action === "refresh") return guarded(load);
+    if (action === "next" || action === "previous") {
+      account.offset = Math.max(
+        0,
+        account.offset + (action === "next" ? 50 : -50)
+      );
+      return guarded(load);
+    }
+    if (action === "admin-logout")
+      return guarded(async () => {
+        await request("/api/admin/auth/logout", "POST", {});
+        location.assign("/admin/login");
+      });
+    if (action === "close-ticket") {
+      account.ticket = null;
+      account.messages = [];
+      redraw();
+      return;
+    }
+    if (action === "edit-wallet" || action === "edit-status") {
+      account.editUser = target.dataset.id;
+      redraw();
+      return;
+    }
+    if (action === "edit-model") {
+      account.editModel = account.data.catalog.find(
+        (m) => m.id === target.dataset.id
+      );
+      redraw();
+      return;
+    }
+    if (action === "review-request") {
+      account.ticket = account.data.items.find((r) => r.id === target.dataset.id);
+      redraw();
+      return;
+    }
+    if (action === "ticket")
+      return guarded(async () => {
+        account.ticket = account.data.items.find(
+          (r) => r.id === target.dataset.id
+        );
+        account.messages = (await request(
+          "/api/admin/support/messages?request_id=" + encodeURIComponent(target.dataset.id)
+        )).items;
+      });
+  }
+  var keys = /* @__PURE__ */ new Map();
+  function idempotency(type, data) {
+    const fingerprint = JSON.stringify(data), old = keys.get(type);
+    if (old?.fingerprint === fingerprint) return old.key;
+    const key = crypto.randomUUID();
+    keys.set(type, { fingerprint, key });
+    return key;
+  }
+  async function submit2(form2) {
+    if (account.busy) return;
+    const type = form2.dataset.accountForm, data = Object.fromEntries(new FormData(form2));
+    await guarded(async () => {
+      if (type === "admin-login") {
+        account.adminProfile = (await request("/api/admin/auth/login", "POST", data)).profile;
+        history.replaceState(
+          {},
+          "",
+          account.adminProfile.role === "SUPPORT" ? "/admin/support" : "/admin"
+        );
+        await load();
+        return;
+      }
+      const routes = {
+        "support-reply": "support/reply",
+        adjust: "wallet/adjust",
+        decision: "requests/decide",
+        status: "users/status",
+        catalog: "models/update"
+      };
+      if (!routes[type]) throw new Error("This action is unavailable.");
+      if (type === "adjust") {
+        data.delta = Number(data.delta);
+        data.idempotency_key = idempotency(type, data);
+      }
+      if (type === "decision") data.idempotency_key = idempotency(type, data);
+      if (type === "catalog") {
+        try {
+          data.operation_prices = JSON.parse(data.operation_prices);
+        } catch {
+          throw new Error("Enter a valid operation-prices JSON object.");
+        }
+        data.enabled = data.enabled === "true";
+      }
+      await request("/api/admin/" + routes[type], "POST", data);
+      keys.delete(type);
+      account.notice = "Saved successfully.";
+      account.ticket = null;
+      account.editUser = null;
+      account.editModel = null;
+      await load();
+    });
+  }
+  async function restoreRoute() {
+    if (!account.busy) await guarded(load);
+  }
+
+  // src/app.js
+  var app = document.getElementById("app");
+  function render() {
+    app.innerHTML = accountMarkup();
+  }
+  registerRenderer(render);
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-account]");
+    if (target) {
+      event.preventDefault();
+      click(target);
+    }
+  });
+  document.addEventListener("submit", (event) => {
+    const form2 = event.target.closest("[data-account-form]");
+    if (form2) {
+      event.preventDefault();
+      submit2(form2);
+    }
+  });
+  window.addEventListener("popstate", restoreRoute);
+  render();
+  initialize();
+})();
+
+</script></body></html>

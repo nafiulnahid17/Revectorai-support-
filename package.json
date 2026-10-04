@@ -1,0 +1,20 @@
+{
+  "name": "revector-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "check": "node scripts/check.cjs",
+    "test": "npm run build && node --test tests/*.test.js",
+    "test:browser": "node scripts/browser-admin.cjs",
+    "dev": "npm run build && wrangler dev --ip 127.0.0.1 --port 8788",
+    "deploy": "npm run build && wrangler deploy --keep-vars"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "playwright": "1.55.0",
+    "wrangler": "4.40.2",
+    "@electric-sql/pglite": "0.5.8"
+  }
+}

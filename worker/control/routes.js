@@ -1,0 +1,182 @@
+import { input, uuid, text, number, ControlError } from "./db.js";
+import { authenticate, authRoute } from "./auth.js";
+const adminTables = {
+  users: "revector_profiles",
+  wallets: "revector_wallets",
+  transactions: "revector_wallet_transactions",
+  usage: "revector_usage_events",
+  requests: "revector_requests",
+  audit: "revector_admin_audit_log",
+  models: "revector_model_catalog",
+};
+function page(url) {
+  const n = Number(url.searchParams.get("offset") || 0);
+  if (!Number.isInteger(n) || n < 0 || n > 100000)
+    throw new ControlError("INVALID_PAGE");
+  return { limit: "50", offset: String(n) };
+}
+export async function controlRoute(request, env, transport) {
+  const url = new URL(request.url),
+    path = url.pathname;
+  if (!path.startsWith("/api/admin/"))
+    throw new ControlError("ROUTE_NOT_ALLOWED", 404);
+  if (path.startsWith("/api/admin/auth/"))
+    return authRoute(request, env, transport, true);
+  const identity = await authenticate(request, env, transport, true);
+  const db = identity.db,
+    uid = identity.user.id;
+  const response = (data) =>
+    Response.json(data, {
+      headers: identity.cookie ? { "Set-Cookie": identity.cookie } : {},
+    });
+  {
+    const route = path.slice("/api/admin/".length);
+    if (
+      identity.profile.role === "SUPPORT" &&
+      !["session", "support", "support/reply", "support/messages"].includes(
+        route,
+      )
+    )
+      throw new ControlError(
+        "ADMIN_REQUIRED",
+        403,
+        "This action requires an administrator.",
+      );
+    if (route === "session" && request.method === "GET")
+      return response({ profile: identity.profile });
+    if (route === "overview" && request.method === "GET")
+      return response(await db.rpc("rv_admin_overview", { p_admin: uid }));
+    if (route === "settings" && request.method === "GET")
+      return response({
+        credits_per_usd: env.CREDITS_PER_USD
+          ? Number(env.CREDITS_PER_USD)
+          : null,
+        payments: "MANUAL_REQUESTS",
+        authentication: "INVITE_ONLY",
+        model_preferences: "ADVISORY",
+        engine_configuration: "READ_ONLY",
+      });
+    if (route === "support" && request.method === "GET")
+      return response({
+        items: await db.table("revector_requests", {
+          type: "eq.SUPPORT",
+          select:
+            "*,revector_profiles!revector_requests_user_id_fkey(name,email)",
+          order: "updated_at.desc",
+          ...page(url),
+        }),
+      });
+    if (route in adminTables && request.method === "GET") {
+      const query = { select: route === "usage" ? "*" : "*", ...page(url) };
+      if (route === "usage") query.event_key = "not.like.request:*";
+      if (!["models", "wallets"].includes(route))
+        query.order = "created_at.desc";
+      if (route === "requests" && url.searchParams.has("type")) {
+        const type = url.searchParams.get("type");
+        if (!["TOPUP", "MODEL_CHANGE", "SUPPORT"].includes(type))
+          throw new ControlError("INVALID_TYPE");
+        query.type = "eq." + type;
+      }
+      return response({ items: await db.table(adminTables[route], query) });
+    }
+    if (route === "wallet/adjust" && request.method === "POST") {
+      const d = await input(request);
+      return response(
+        await db.rpc("rv_adjust_wallet", {
+          p_admin: uid,
+          p_user: uuid(d.user_id),
+          p_delta: number(d.delta, -1e6, 1e6),
+          p_reason: text(d.reason),
+          p_key: uuid(d.idempotency_key),
+        }),
+      );
+    }
+    if (route === "requests/decide" && request.method === "POST") {
+      const d = await input(request);
+      if (d.decision === "REPLY")
+        return response(
+          await db.rpc("rv_reply_request", {
+            p_admin: uid,
+            p_request: uuid(d.request_id),
+            p_response: text(d.response, 4000),
+          }),
+        );
+      if (!["APPROVED", "REJECTED"].includes(d.decision))
+        throw new ControlError("INVALID_DECISION");
+      return response(
+        await db.rpc("rv_decide_request", {
+          p_admin: uid,
+          p_request: uuid(d.request_id),
+          p_decision: d.decision,
+          p_response: text(d.response || "", 4000, false),
+          p_key: uuid(d.idempotency_key),
+          p_model: d.model_id ? uuid(d.model_id) : null,
+        }),
+      );
+    }
+    if (route === "users/status" && request.method === "POST") {
+      const d = await input(request);
+      if (!["ACTIVE", "SUSPENDED", "DISABLED"].includes(d.status))
+        throw new ControlError("INVALID_STATUS");
+      return response(
+        await db.rpc("rv_set_account_status", {
+          p_admin: uid,
+          p_user: uuid(d.user_id),
+          p_status: d.status,
+          p_reason: text(d.reason),
+        }),
+      );
+    }
+    if (route === "support/reply" && request.method === "POST") {
+      const d = await input(request);
+      return response(
+        await db.rpc("rv_reply_support", {
+          p_admin: uid,
+          p_request: uuid(d.request_id),
+          p_response: text(d.message, 4000),
+          p_status: text(d.status, 30),
+        }),
+      );
+    }
+    if (route === "support/messages" && request.method === "GET") {
+      const ticket = uuid(url.searchParams.get("request_id"));
+      const found = (
+        await db.table("revector_requests", {
+          id: "eq." + ticket,
+          type: "eq.SUPPORT",
+          select: "id",
+        })
+      )[0];
+      if (!found) throw new ControlError("NOT_FOUND", 404);
+      return response({
+        items: await db.table("revector_support_messages", {
+          request_id: "eq." + ticket,
+          select: "*",
+          order: "created_at.asc",
+          ...page(url),
+        }),
+      });
+    }
+    if (route === "models/update" && request.method === "POST") {
+      const d = await input(request);
+      if (
+        typeof d.enabled !== "boolean" ||
+        !d.operation_prices ||
+        Array.isArray(d.operation_prices) ||
+        Object.keys(d.operation_prices).length > 6
+      )
+        throw new ControlError("INVALID_PRICING");
+      return response(
+        await db.rpc("rv_update_catalog", {
+          p_admin: uid,
+          p_id: uuid(d.model_id),
+          p_enabled: d.enabled,
+          p_prices: d.operation_prices,
+          p_version: text(d.pricing_version, 80),
+          p_reason: text(d.reason),
+        }),
+      );
+    }
+    throw new ControlError("ROUTE_NOT_ALLOWED", 404);
+  }
+}

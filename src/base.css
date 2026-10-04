@@ -1,0 +1,73 @@
+:root {
+  --ink: #e0e8f0;
+  --muted: #92a5ba;
+  --border: #2c3c50;
+  --panel: #102136;
+  --surface: #07111d;
+  --brand: #dfbb74;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 13px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--ink);
+}
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 18px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+a {
+  color: var(--brand);
+}
+input,
+select,
+textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #bfa266;
+  outline-offset: 3px;
+}
+.primary {
+  background: linear-gradient(120deg, #e0bc72, #be9850);
+  border-color: #c7a15b;
+  color: #131a20;
+  font-weight: 700;
+}
+.muted {
+  color: var(--muted);
+}
+.section-kicker {
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-size: 10px;
+}
+.account-form > fieldset {
+  display: grid;
+  gap: 16px;
+}

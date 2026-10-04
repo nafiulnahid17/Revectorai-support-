@@ -1,0 +1,8 @@
+# Configure these only on the ADMIN Worker. Use the same reviewed Supabase schema.
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+# A separate random 32+ character key, different from the USER Worker.
+SESSION_SIGNING_KEY=
+# Optional, must match the user backend's approved pricing conversion.
+CREDITS_PER_USD=
