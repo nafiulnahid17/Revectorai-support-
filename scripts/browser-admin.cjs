@@ -268,7 +268,8 @@ const { chromium } = require("playwright"),
     await page.getByText("Saved successfully.", { exact: true }).waitFor();
     assert.equal(balance, 17);
     assert.equal(ledger.length, 2);
-    await nav("Settings");
+    await nav("Payment Methods");
+    await page.getByRole("heading", { name: "Payment Methods", exact: true }).waitFor();
     await page.locator('[name="usd_to_bdt_rate"]').fill("131.5");
     await page.locator('[name="bkash_enabled"]').selectOption("true");
     await page.locator('[name="bkash_number"]').fill("01711111111");
