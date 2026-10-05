@@ -756,3 +756,100 @@
   .payment-settings-grid{grid-template-columns:1fr}
   .payment-config-card.rate-card{grid-column:auto}
 }
+
+
+/* Support operations segmentation */
+.support-ops-hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:22px 24px;
+  margin-bottom:14px;
+  border:1px solid #334f69;
+  border-radius:15px;
+  background:
+    radial-gradient(circle at 88% 12%,#5c4df12e,transparent 34%),
+    linear-gradient(135deg,#10263d,#0a1726 70%);
+}
+.support-ops-hero h2{
+  margin:6px 0 7px;
+  color:#f2f6fa;
+  font-size:22px;
+}
+.support-ops-hero p{
+  margin:0;
+  max-width:650px;
+  color:#90a6b9;
+  font-size:11px;
+  line-height:1.6;
+}
+.support-ops-metrics{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(80px,1fr));
+  gap:9px;
+}
+.support-ops-metrics span{
+  min-width:88px;
+  padding:11px 12px;
+  border:1px solid #2d465d;
+  border-radius:10px;
+  background:#0a1928;
+  text-align:center;
+}
+.support-ops-metrics small{
+  display:block;
+  color:#7e96aa;
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+.support-ops-metrics strong{
+  display:block;
+  margin-top:6px;
+  color:#e5c57c;
+  font-size:20px;
+}
+.support-segments{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 18px;
+}
+.support-segment{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 12px;
+  border:1px solid #30475d;
+  border-radius:999px;
+  color:#9fb1c2;
+  background:#0b1b2b;
+  font-size:10px;
+}
+.support-segment strong{
+  min-width:20px;
+  padding:2px 6px;
+  border-radius:999px;
+  color:#c8d8e6;
+  background:#162c41;
+  font-size:9px;
+}
+.support-segment.active{
+  color:#f0cc7c;
+  border-color:#78623c;
+  background:linear-gradient(120deg,#2d261a,#142235);
+  box-shadow:0 0 18px #d7aa4817;
+}
+.support-segment.active strong{
+  color:#f6d998;
+  background:#3a301f;
+}
+@media(max-width:900px){
+  .support-ops-hero{align-items:flex-start;flex-direction:column}
+  .support-ops-metrics{width:100%}
+}
+@media(max-width:560px){
+  .support-ops-metrics{grid-template-columns:repeat(2,1fr)}
+  .support-segment{flex:1 1 calc(50% - 8px);justify-content:center}
+}
