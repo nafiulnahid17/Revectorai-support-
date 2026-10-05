@@ -38,6 +38,7 @@ const apiRoutes = new Map([
     "users/status",
     "support/reply",
     "models/update",
+    "settings/payment",
   ].map((r) => ["/api/admin/" + r, "POST"]),
 ]);
 function decorate(response, extraCookie) {
