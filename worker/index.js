@@ -7,6 +7,7 @@ const pages = new Set([
   "/admin/overview",
   "/admin/users",
   "/admin/wallets",
+  "/admin/payments",
   "/admin/credits",
   "/admin/usage",
   "/admin/models",
