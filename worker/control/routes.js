@@ -26,7 +26,7 @@ const paymentMethods = new Set([
   "OTHER",
 ]);
 
-function dashboardSeries(rows, requests, transactions, profiles) {
+function dashboardSeries(rows, requests, transactions) {
   const days = [];
   const byDay = new Map();
   const now = new Date();
@@ -43,7 +43,6 @@ function dashboardSeries(rows, requests, transactions, profiles) {
       credits_used: 0,
       ai_cost_usd: 0,
       failed_events: 0,
-      new_users: 0,
       wallet_credits: 0,
     };
     days.push(item);
@@ -57,10 +56,6 @@ function dashboardSeries(rows, requests, transactions, profiles) {
     day.credits_used += Number(row.credits_charged || 0);
     day.ai_cost_usd += Number(row.estimated_usd_cost || 0);
     if (row.status === "FAILED") day.failed_events += 1;
-  }
-  for (const row of profiles || []) {
-    const day = bucket(row.created_at);
-    if (day) day.new_users += 1;
   }
   for (const row of transactions || []) {
     const day = bucket(row.created_at);
@@ -107,8 +102,7 @@ export async function controlRoute(request, env, transport) {
       return response({ profile: identity.profile });
     if (route === "overview" && request.method === "GET") {
       const since = new Date(Date.now() - 29 * 86400000).toISOString();
-      const [summary, usage, requests, transactions, profiles] =
-        await Promise.all([
+      const [summary, usage, requests, transactions] = await Promise.all([
           db.rpc("rv_admin_overview", { p_admin: uid }),
           db.table("revector_usage_events", {
             select:
@@ -130,16 +124,10 @@ export async function controlRoute(request, env, transport) {
             order: "created_at.asc",
             limit: "1000",
           }),
-          db.table("revector_profiles", {
-            select: "created_at",
-            created_at: "gte." + since,
-            order: "created_at.asc",
-            limit: "1000",
-          }),
         ]);
       return response({
         ...summary,
-        charts: dashboardSeries(usage, requests, transactions, profiles),
+        charts: dashboardSeries(usage, requests, transactions),
         chart_window_days: 30,
       });
     }
