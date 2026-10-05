@@ -19,7 +19,22 @@ const { chromium } = require("playwright"),
     balance = 12,
     ledger = [],
     messages = [],
-    preference = null;
+    preference = null,
+    paymentSettings = {
+      usd_to_bdt_rate: 130,
+      bkash: {
+        enabled: false,
+        number: "",
+        instructions: [],
+      },
+      nagad: {
+        enabled: false,
+        number: "",
+        instructions: [],
+      },
+      updated_at: null,
+      updated_by: null,
+    };
   const tickets = [
     {
       id: T,
@@ -106,6 +121,29 @@ const { chromium } = require("playwright"),
         ).length,
         open_support: tickets.filter((t) => t.status === "OPEN").length,
       };
+    else if (p === "/api/admin/settings")
+      data = {
+        credits_per_usd: null,
+        payments: "MANUAL_REQUESTS",
+        authentication: "INVITE_ONLY",
+        model_preferences: "ADVISORY",
+        engine_configuration: "READ_ONLY",
+        payment_settings: paymentSettings,
+      };
+    else if (p === "/api/admin/settings/payment") {
+      const d = body();
+      assert.equal(typeof d.usd_to_bdt_rate, "number");
+      assert.equal(typeof d.bkash.enabled, "boolean");
+      assert.equal(typeof d.nagad.enabled, "boolean");
+      paymentSettings = {
+        usd_to_bdt_rate: d.usd_to_bdt_rate,
+        bkash: d.bkash,
+        nagad: d.nagad,
+        updated_at: new Date().toISOString(),
+        updated_by: A,
+      };
+      data = paymentSettings;
+    }
     else if (p === "/api/admin/models")
       data = {
         items: [
@@ -223,6 +261,27 @@ const { chromium } = require("playwright"),
     await page.getByText("Saved successfully.", { exact: true }).waitFor();
     assert.equal(balance, 17);
     assert.equal(ledger.length, 2);
+    await nav("Settings");
+    await page.locator('[name="usd_to_bdt_rate"]').fill("131.5");
+    await page.locator('[name="bkash_enabled"]').selectOption("true");
+    await page.locator('[name="bkash_number"]').fill("01711111111");
+    await page.locator('[name="bkash_instructions"]').fill(
+      "Send exact BDT amount\nKeep the TrxID\nSubmit the TrxID in ReVector",
+    );
+    await page.locator('[name="nagad_enabled"]').selectOption("true");
+    await page.locator('[name="nagad_number"]').fill("01822222222");
+    await page.locator('[name="nagad_instructions"]').fill(
+      "Send exact BDT amount\nKeep the transaction ID",
+    );
+    await page
+      .getByRole("button", { name: "Save Payment Configuration", exact: true })
+      .click();
+    await page.getByText("Saved successfully.", { exact: true }).waitFor();
+    assert.equal(paymentSettings.usd_to_bdt_rate, 131.5);
+    assert.equal(paymentSettings.bkash.number, "01711111111");
+    assert.equal(paymentSettings.bkash.instructions.length, 3);
+    assert.equal(paymentSettings.nagad.number, "01822222222");
+
     await nav("Support Inbox");
     await page.getByRole("button", { name: "Open", exact: true }).click();
     await page
@@ -269,6 +328,7 @@ const { chromium } = require("playwright"),
         topup_and_model_approval: "PASS",
         wallet_adjustment: "PASS",
         support_reply: "PASS",
+        payment_settings_admin: "PASS",
         support_role: "PASS",
         responsive_widths: [1920, 1600, 1440, 1366, 1280, 390],
         page_errors: errors,
