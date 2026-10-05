@@ -187,11 +187,13 @@ const { chromium } = require("playwright"),
       };
     else if (p === "/api/admin/wallet/adjust") {
       const d = body();
-      assert.equal(typeof d.delta, "number");
-      assert.ok(d.reason);
+      assert.equal(typeof d.credits, "number");
+      assert.ok(["ADD", "DEDUCT"].includes(d.direction));
+      assert.ok(d.transaction_reference);
+      const delta = d.direction === "DEDUCT" ? -d.credits : d.credits;
       if (!keys.has(d.idempotency_key)) {
-        balance += d.delta;
-        ledger.push(d);
+        balance += delta;
+        ledger.push({ ...d, delta });
         keys.add(d.idempotency_key);
       }
     } else if (p === "/api/admin/support") data = { items: tickets };
@@ -254,10 +256,15 @@ const { chromium } = require("playwright"),
     await page.getByText("APPROVED", { exact: true }).waitFor();
     assert.equal(preference, M);
     await nav("Wallet / Balances");
-    await page.getByRole("button", { name: "Adjust", exact: true }).click();
-    await page.locator("[name=delta]").fill("-3");
-    await page.locator("[name=reason]").fill("Audited QA correction");
-    await page.getByRole("button", { name: "Record Adjustment" }).click();
+    await page.getByRole("button", { name: "Manage Balance", exact: true }).click();
+    await page.locator("[name=direction]").selectOption("DEDUCT");
+    await page.locator("[name=credits]").fill("3");
+    await page.locator("[name=payment_method]").selectOption("MANUAL");
+    await page.locator("[name=transaction_reference]").fill("QA-WALLET-ADJUST");
+    await page.locator("[name=note]").fill("Audited QA correction");
+    await page
+      .getByRole("button", { name: "Record Balance Transaction", exact: true })
+      .click();
     await page.getByText("Saved successfully.", { exact: true }).waitFor();
     assert.equal(balance, 17);
     assert.equal(ledger.length, 2);
