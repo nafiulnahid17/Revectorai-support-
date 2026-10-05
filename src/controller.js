@@ -68,6 +68,15 @@ async function load() {
       request("/api/admin/models"),
     ]);
     account.data = { settings, catalog: models.items };
+  } else if (route === "wallets") {
+    const [wallets, transactions] = await Promise.all([
+      request("/api/admin/wallets" + offset),
+      request("/api/admin/transactions" + offset),
+    ]);
+    account.data = {
+      items: wallets.items,
+      transactions: transactions.items,
+    };
   } else if (["credits", "models"].includes(route)) {
     const [requests, models] = await Promise.all([
       request(
@@ -190,7 +199,8 @@ export async function submit(form) {
     };
     if (!routes[type]) throw new Error("This action is unavailable.");
     if (type === "adjust") {
-      data.delta = Number(data.delta);
+      if (data.credits !== undefined) data.credits = Number(data.credits);
+      else data.delta = Number(data.delta);
       data.idempotency_key = idempotency(type, data);
     }
     if (type === "decision") data.idempotency_key = idempotency(type, data);
