@@ -26,6 +26,26 @@ const paymentMethods = new Set([
   "OTHER",
 ]);
 
+function paymentConfig(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new ControlError("INVALID_PAYMENT_SETTINGS");
+  if (typeof value.enabled !== "boolean")
+    throw new ControlError("INVALID_PAYMENT_SETTINGS");
+  const destination = text(value.number || "", 40, false);
+  if (value.enabled && !destination)
+    throw new ControlError(
+      "INVALID_PAYMENT_SETTINGS",
+      400,
+      "An enabled payment method requires a destination number.",
+    );
+  if (!Array.isArray(value.instructions) || value.instructions.length > 8)
+    throw new ControlError("INVALID_PAYMENT_SETTINGS");
+  const instructions = value.instructions.map((item) =>
+    text(String(item || ""), 300, false),
+  ).filter(Boolean);
+  return { enabled: value.enabled, number: destination, instructions };
+}
+
 function dashboardSeries(rows, requests, transactions) {
   const days = [];
   const byDay = new Map();
@@ -131,7 +151,14 @@ export async function controlRoute(request, env, transport) {
         chart_window_days: 30,
       });
     }
-    if (route === "settings" && request.method === "GET")
+    if (route === "settings" && request.method === "GET") {
+      const paymentSettings = (
+        await db.table("revector_payment_settings", {
+          id: "eq.default",
+          select: "usd_to_bdt_rate,bkash,nagad,updated_at,updated_by",
+          limit: "1",
+        })
+      )[0] || null;
       return response({
         credits_per_usd: env.CREDITS_PER_USD
           ? Number(env.CREDITS_PER_USD)
@@ -140,7 +167,23 @@ export async function controlRoute(request, env, transport) {
         authentication: "INVITE_ONLY",
         model_preferences: "ADVISORY",
         engine_configuration: "READ_ONLY",
+        payment_settings: paymentSettings,
       });
+    }
+    if (route === "settings/payment" && request.method === "POST") {
+      const d = await input(request);
+      const rate = number(Number(d.usd_to_bdt_rate), 0.0001, 10000);
+      const bkash = paymentConfig(d.bkash);
+      const nagad = paymentConfig(d.nagad);
+      return response(
+        await db.rpc("rv_update_payment_settings", {
+          p_admin: uid,
+          p_rate: rate,
+          p_bkash: bkash,
+          p_nagad: nagad,
+        }),
+      );
+    }
     if (route === "support" && request.method === "GET")
       return response({
         items: await db.table("revector_requests", {
