@@ -195,7 +195,6 @@ function adminContent(page) {
         ${panel("AI / Tool Activity", svgLine(daily, "usage_events"))}
         ${panel("Credits Consumed", svgLine(daily, "credits_used"))}
         ${panel("AI Cost Trend", svgLine(daily, "ai_cost_usd", " USD"))}
-        ${panel("New Users", svgLine(daily, "new_users"))}
         ${panel("Wallet Recharge Volume", svgLine(daily, "wallet_credits"))}
         ${panel(
           "Support Queue",
