@@ -8,6 +8,7 @@ export const account = {
   ticket: null,
   messages: [],
   offset: 0,
+  supportFilter: "ALL",
   editUser: null,
   editModel: null,
 };
