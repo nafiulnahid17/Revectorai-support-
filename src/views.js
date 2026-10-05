@@ -35,6 +35,50 @@ function table(headers, rows) {
 }
 const badge = (status) =>
   `<span class="account-badge">${e(status || "—")}</span>`;
+
+const navIcons = {
+  overview: "◈",
+  users: "◎",
+  wallets: "◇",
+  credits: "＋",
+  usage: "⌁",
+  models: "✦",
+  support: "◌",
+  audit: "▤",
+  settings: "⚙",
+};
+const navIcon = (route) =>
+  `<span class="nav-icon" aria-hidden="true">${navIcons[route] || "•"}</span>`;
+
+function svgLine(points, key, suffix = "") {
+  if (!Array.isArray(points) || !points.length)
+    return empty("No chart data yet.");
+  const values = points.map((p) => Number(p[key] || 0));
+  const max = Math.max(...values, 1);
+  const width = 620;
+  const height = 150;
+  const step = values.length > 1 ? width / (values.length - 1) : width;
+  const coords = values
+    .map((value, index) => {
+      const x = Math.round(index * step * 100) / 100;
+      const y =
+        Math.round((height - (value / max) * (height - 18) - 8) * 100) / 100;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const latest = values.at(-1) || 0;
+  return `<div class="digital-chart">
+    <div class="digital-chart-value">${money(latest)}${suffix}</div>
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${e(key.replaceAll("_", " "))} last 30 days">
+      <polyline class="chart-line" points="${coords}"></polyline>
+    </svg>
+    <div class="chart-axis"><span>30 days ago</span><span>Today</span></div>
+  </div>`;
+}
+
+function metricTile(label, value, detail = "") {
+  return `<section class="metric-tile"><small>${e(label)}</small><strong>${money(value)}</strong>${detail ? `<span>${e(detail)}</span>` : ""}</section>`;
+}
 function login(admin) {
   return `<div class="account-login ${admin ? "admin-login" : ""}"><a class="console-brand" href="/" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI</strong></a><section class="login-card"><div class="section-kicker">${admin ? "Support & Operations Console" : "Invite-only account"}</div><h1>${admin ? "Admin Sign In" : "Welcome to ReVector"}</h1><p class="muted">${admin ? "Authorized administrators and support staff only." : "Sign in with your invited account to access your production workspace."}</p>${account.configured === false ? empty("Account services are not configured. Contact the owner to enable Supabase Auth.") : form(admin ? "admin-login" : "login", field(admin ? "Admin Email" : "Email", "email", "email", "", 'required autocomplete="username"') + field("Password", "password", "password", "", 'required autocomplete="current-password"'), admin ? "Sign In to Admin Console" : "Sign In")}${account.error ? `<p role="alert" class="account-error">${e(account.error)}</p>` : ""}${!admin ? '<a href="/" data-account="nav">Return to production workspace</a>' : ""}</section></div>`;
 }
@@ -131,22 +175,36 @@ function conversation(admin) {
 function adminContent(page) {
   const d = account.data,
     items = d.items || [];
-  if (page === "overview")
-    return (
-      `<div class="account-metrics">${
-        Object.entries(d)
-          .filter(([k, v]) => typeof v === "number" || v === null)
-          .map(
-            ([k, v]) =>
-              `<section><small>${e(k.replaceAll("_", " "))}</small><strong>${money(v)}</strong></section>`,
-          )
-          .join("") || empty("No operational data loaded.")
-      }</div>` +
-      panel(
-        "Support & Operations",
-        "<p>Global reports are available only in this console. Wallet changes use append-only ledger transactions and audited reasons.</p>",
-      )
-    );
+  if (page === "overview") {
+    const daily = d.charts?.daily || [];
+    return `<section class="overview-hero">
+        <div><div class="section-kicker">LIVE OPERATIONS</div><h2>ReVector Control Overview</h2><p>Real operational totals and the last ${e(d.chart_window_days || 30)} days of recorded activity.</p></div>
+        <span class="overview-live"><i></i> Live data</span>
+      </section>
+      <div class="metric-grid">
+        ${metricTile("Total Users", d.total_users, `${money(d.active_accounts)} active`)}
+        ${metricTile("Credits Used", d.credits_used)}
+        ${metricTile("Open Support", d.open_support, `${money(d.resolved_support)} resolved`)}
+        ${metricTile("Pending Top-ups", d.pending_topups)}
+        ${metricTile("Model Requests", d.model_requests)}
+        ${metricTile("Failed Usage", d.failed_usage_events)}
+        ${metricTile("Actual AI Cost (USD)", d.actual_reported_ai_cost_usd)}
+        ${metricTile("Estimated AI Cost (USD)", d.estimated_ai_cost_usd)}
+      </div>
+      <div class="overview-chart-grid">
+        ${panel("AI / Tool Activity", svgLine(daily, "usage_events"))}
+        ${panel("Credits Consumed", svgLine(daily, "credits_used"))}
+        ${panel("AI Cost Trend", svgLine(daily, "ai_cost_usd", " USD"))}
+        ${panel("New Users", svgLine(daily, "new_users"))}
+        ${panel("Wallet Recharge Volume", svgLine(daily, "wallet_credits"))}
+        ${panel(
+          "Support Queue",
+          `<div class="status-rings">
+            ${Object.entries(d.charts?.support || {}).map(([status, value]) => `<div><strong>${money(value)}</strong><span>${e(status.replaceAll("_", " "))}</span></div>`).join("") || empty("No support activity yet.")}
+          </div>`,
+        )}
+      </div>`;
+  }
   if (page === "users")
     return (
       panel(
@@ -181,38 +239,79 @@ function adminContent(page) {
     );
   if (page === "wallets")
     return (
+      `<section class="wallet-summary-banner"><div><div class="section-kicker">WALLET CONTROL</div><h2>Balances & Credit Recharge</h2><p>Add or deduct credits with an auditable payment method, transaction reference and server-recorded time.</p></div><span>${items.length} wallets loaded</span></section>` +
       panel(
         "Balances",
         table(
-          ["User ID", "Balance", "Reserved", "Action"],
+          ["User ID", "Available Balance", "Reserved", "Action"],
           items.map((v) => [
             e(v.user_id),
-            money(v.current_credit_balance),
+            `<strong class="wallet-amount">${money(v.current_credit_balance)}</strong>`,
             money(v.reserved_credits),
-            button("Adjust", "edit-wallet", `data-id="${e(v.user_id)}"`),
+            button("Manage Balance", "edit-wallet", `data-id="${e(v.user_id)}"`),
           ]),
         ),
       ) +
       panel(
-        "Audited Wallet Adjustment",
-        form(
-          "adjust",
-          field(
-            "User ID",
-            "user_id",
-            "text",
-            account.editUser || "",
-            "required",
-          ) +
+        "Add / Deduct Balance",
+        `<div class="wallet-form-note">Transaction time is recorded automatically by the server when the adjustment succeeds.</div>` +
+          form(
+            "adjust",
             field(
-              "Credits delta (negative to deduct)",
-              "delta",
-              "number",
-              "",
-              'required min="-1000000" max="1000000" step="0.0001"',
+              "User ID",
+              "user_id",
+              "text",
+              account.editUser || "",
+              "required",
             ) +
-            area("Required reason", "reason", 'maxlength="1000"'),
-          "Record Adjustment",
+              select("Action", "direction", [
+                ["ADD", "Add balance / credit recharge"],
+                ["DEDUCT", "Deduct balance"],
+              ]) +
+              field(
+                "Credit recharge",
+                "credits",
+                "number",
+                "",
+                'required min="0.0001" max="1000000" step="0.0001"',
+              ) +
+              select("Transaction method", "payment_method", [
+                ["BKASH", "bKash"],
+                ["NAGAD", "Nagad"],
+                ["BANK_TRANSFER", "Bank Transfer"],
+                ["CARD", "Card"],
+                ["CASH", "Cash"],
+                ["MANUAL", "Manual Adjustment"],
+                ["OTHER", "Other"],
+              ]) +
+              field(
+                "Transaction / Reference ID",
+                "transaction_reference",
+                "text",
+                "",
+                'required maxlength="180"',
+              ) +
+              area("Notes / reason", "note", 'maxlength="600"'),
+            "Record Balance Transaction",
+          ),
+      ) +
+      panel(
+        "Recent Wallet Transactions",
+        table(
+          [
+            "Type",
+            "Credits",
+            "Balance After",
+            "Transaction Details",
+            "Recorded Time",
+          ],
+          (d.transactions || []).map((v) => [
+            badge(v.type),
+            `<strong class="${Number(v.credits_delta) >= 0 ? "credit-positive" : "credit-negative"}">${Number(v.credits_delta) >= 0 ? "+" : ""}${money(v.credits_delta)}</strong>`,
+            money(v.balance_after),
+            `${e(v.reason)}<small>${e(v.reference)}</small>`,
+            date(v.created_at),
+          ]),
         ),
       )
     );
@@ -344,5 +443,5 @@ export function accountMarkup() {
     profile.role === "SUPPORT"
       ? adminPages.filter(([key]) => key === "support")
       : adminPages;
-  return `<div class="account-layout admin-console"><header><a class="console-brand" href="/admin" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI<small>ADMIN CONSOLE · Support & Operations</small></strong></a><div class="right">${badge(profile.role)}${button("Sign Out", "admin-logout")}</div></header><div class="account-shell"><nav class="account-nav" aria-label="Admin navigation">${pages.map(([route, label]) => `<a href="/admin/${route}" class="${page === route ? "active" : ""}" data-account="nav">${label}</a>`).join("")}</nav><main class="account-main"><div class="account-heading"><div><div class="section-kicker">Operations & Support</div><h1>${e(pages.find(([r]) => r === page)?.[1] || page)}</h1></div>${button("Refresh", "refresh")}</div>${account.error ? `<p class="account-error" role="alert">${e(account.error)}</p>` : ""}${account.notice ? `<p class="account-notice" role="status">${e(account.notice)}</p>` : ""}${account.busy ? '<p role="status">Loading operations data…</p>' : ""}${account.configured === false ? empty("Supabase configuration is required before sign in.") : adminContent(page)}${["usage", "support", "credits", "models", "users", "wallets", "audit"].includes(page) ? `<div class="account-pager">${button("Previous", "previous", account.offset === 0 ? "disabled" : "")}<span>Page ${account.offset / 50 + 1}</span>${button("Next", "next", (account.data.items || []).length < 50 ? "disabled" : "")}</div>` : ""}</main></div></div>`;
+  return `<div class="account-layout admin-console"><header><a class="console-brand" href="/admin" data-account="nav"><span class="gold-mark">R</span><strong>ReVector AI<small>ADMIN CONSOLE · Support & Operations</small></strong></a><div class="right">${badge(profile.role)}${button("Sign Out", "admin-logout")}</div></header><div class="account-shell"><nav class="account-nav" aria-label="Admin navigation">${pages.map(([route, label]) => `<a href="/admin/${route}" class="${page === route ? "active" : ""}" data-account="nav">${navIcon(route)}<span>${label}</span></a>`).join("")}</nav><main class="account-main"><div class="account-heading"><div><div class="section-kicker">Operations & Support</div><h1>${e(pages.find(([r]) => r === page)?.[1] || page)}</h1></div>${button("Refresh", "refresh")}</div>${account.error ? `<p class="account-error" role="alert">${e(account.error)}</p>` : ""}${account.notice ? `<p class="account-notice" role="status">${e(account.notice)}</p>` : ""}${account.busy ? '<p role="status">Loading operations data…</p>' : ""}${account.configured === false ? empty("Supabase configuration is required before sign in.") : adminContent(page)}${["usage", "support", "credits", "models", "users", "wallets", "audit"].includes(page) ? `<div class="account-pager">${button("Previous", "previous", account.offset === 0 ? "disabled" : "")}<span>Page ${account.offset / 50 + 1}</span>${button("Next", "next", (account.data.items || []).length < 50 ? "disabled" : "")}</div>` : ""}</main></div></div>`;
 }
