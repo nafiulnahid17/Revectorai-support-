@@ -62,7 +62,9 @@ async function load() {
   }
   const route = accountPage(),
     offset = "?offset=" + account.offset;
-  if (route === "settings") {
+  if (route === "payments") {
+    account.data = { settings: await request("/api/admin/settings") };
+  } else if (route === "settings") {
     const [settings, models] = await Promise.all([
       request("/api/admin/settings"),
       request("/api/admin/models"),
