@@ -16,6 +16,7 @@ export const adminPages = [
   ["overview", "Overview"],
   ["users", "Users"],
   ["wallets", "Wallet / Balances"],
+  ["payments", "Payment Methods"],
   ["credits", "Credit Requests"],
   ["usage", "Usage Logs"],
   ["models", "Model Requests"],
