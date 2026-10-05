@@ -40,6 +40,7 @@ const navIcons = {
   overview: "◈",
   users: "◎",
   wallets: "◇",
+  payments: "৳",
   credits: "＋",
   usage: "⌁",
   models: "✦",
@@ -409,7 +410,7 @@ function adminContent(page) {
         ]),
       ),
     );
-  if (page === "settings") {
+  if (page === "payments") {
     const settings = d.settings || {};
     const payment = settings.payment_settings || {};
     const bkash = payment.bkash || {};
@@ -457,17 +458,19 @@ function adminContent(page) {
       '<p class="payment-settings-note">Saving here updates the shared control database. The ReVector user Add Credits page reads these values; no payment number or instruction is hardcoded in the user interface.</p>',
       "Save Payment Configuration",
     );
-
+    return panel(
+      "Payment Methods",
+      '<div class="payment-settings-hero"><div><div class="section-kicker">USER TOP-UP CONTROL</div><h3>bKash, Nagad & Conversion Rate</h3><p>Manage exactly what users see when they add balance. Disabled methods cannot be submitted.</p></div>' +
+        (payment.updated_at
+          ? '<span>Last updated ' + date(payment.updated_at) + "</span>"
+          : '<span>Not configured yet</span>') +
+      "</div>" +
+      paymentForm,
+    );
+  }
+  if (page === "settings") {
+    const settings = d.settings || {};
     return (
-      panel(
-        "Payment Configuration",
-        '<div class="payment-settings-hero"><div><div class="section-kicker">USER TOP-UP CONTROL</div><h3>bKash, Nagad & Conversion Rate</h3><p>Manage exactly what users see when they add balance. Disabled methods cannot be submitted.</p></div>' +
-          (payment.updated_at
-            ? '<span>Last updated ' + date(payment.updated_at) + "</span>"
-            : '<span>Not configured yet</span>') +
-        "</div>" +
-        paymentForm,
-      ) +
       panel(
         "Control Backend Settings",
         '<dl class="account-details">' +
@@ -480,7 +483,7 @@ function adminContent(page) {
                 "</dd>",
             )
             .join("") +
-        '</dl><p class="muted">Engine and production secrets are managed separately. This console cannot change Railway settings.</p>',
+        '</dl><p class="muted">Payment methods are managed from the dedicated Payment Methods segment. Engine and production secrets are managed separately. This console cannot change Railway settings.</p>',
       ) +
       panel(
         "Model Catalog",
