@@ -359,8 +359,42 @@ function adminContent(page) {
         : "")
     );
   if (page === "usage") return panel("Global Usage", usage(items, true));
-  if (page === "support")
-    return conversation(true) + panel("Support Inbox", tickets(items, true));
+  if (page === "support") {
+    const statuses = ["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
+    const active = statuses.includes(account.supportFilter)
+      ? account.supportFilter
+      : "ALL";
+    const count = (status) =>
+      status === "ALL"
+        ? items.length
+        : items.filter((ticket) => ticket.status === status).length;
+    const filtered =
+      active === "ALL"
+        ? items
+        : items.filter((ticket) => ticket.status === active);
+    const segments = statuses
+      .map(
+        (status) =>
+          button(
+            `${status === "ALL" ? "All" : status.replaceAll("_", " ")} <strong>${count(status)}</strong>`,
+            "support-filter",
+            `class="support-segment ${active === status ? "active" : ""}" data-filter="${status}" aria-pressed="${active === status}"`,
+          ),
+      )
+      .join("");
+    return `<section class="support-ops-hero">
+        <div><div class="section-kicker">SUPPORT OPERATIONS</div><h2>Ticket Command Center</h2><p>Prioritize active conversations without mixing resolved history into the working queue.</p></div>
+        <div class="support-ops-metrics">
+          <span><small>Open</small><strong>${count("OPEN")}</strong></span>
+          <span><small>In Progress</small><strong>${count("IN_PROGRESS")}</strong></span>
+          <span><small>Resolved</small><strong>${count("RESOLVED")}</strong></span>
+          <span><small>Closed</small><strong>${count("CLOSED")}</strong></span>
+        </div>
+      </section>
+      <div class="support-segments" role="group" aria-label="Filter support tickets by status">${segments}</div>
+      ${conversation(true)}
+      ${panel(`Support Inbox · ${filtered.length}`, tickets(filtered, true))}`;
+  }
   if (page === "audit")
     return panel(
       "Append-only Audit Log",
