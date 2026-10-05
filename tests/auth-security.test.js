@@ -256,6 +256,35 @@ test("Admin sessions are origin-bound, revoked profiles fail and ledger actions 
     f.transport,
   );
   assert.equal(invalid.status, 400);
+
+  const payment = await handle(
+    req(
+      "/api/admin/settings/payment",
+      "POST",
+      {
+        usd_to_bdt_rate: 130,
+        bkash: {
+          enabled: true,
+          number: "01700000000",
+          instructions: ["Send payment", "Keep the transaction ID"],
+        },
+        nagad: {
+          enabled: false,
+          number: "",
+          instructions: [],
+        },
+      },
+      { cookie },
+    ),
+    env,
+    f.transport,
+  );
+  assert.equal(payment.status, 200);
+  const paymentRpc = f.calls.find(
+    (c) => c.url.pathname === "/rest/v1/rpc/rv_update_payment_settings",
+  );
+  assert.equal(paymentRpc.body.p_admin, A);
+  assert.equal(paymentRpc.body.p_rate, 130);
   f.profiles[A].status = "SUSPENDED";
   assert.equal(
     (
