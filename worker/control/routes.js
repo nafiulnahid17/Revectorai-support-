@@ -15,6 +15,67 @@ function page(url) {
     throw new ControlError("INVALID_PAGE");
   return { limit: "50", offset: String(n) };
 }
+
+const paymentMethods = new Set([
+  "BKASH",
+  "NAGAD",
+  "BANK_TRANSFER",
+  "CARD",
+  "CASH",
+  "MANUAL",
+  "OTHER",
+]);
+
+function dashboardSeries(rows, requests, transactions, profiles) {
+  const days = [];
+  const byDay = new Map();
+  const now = new Date();
+  for (let offset = 29; offset >= 0; offset--) {
+    const d = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - offset,
+    ));
+    const key = d.toISOString().slice(0, 10);
+    const item = {
+      day: key,
+      usage_events: 0,
+      credits_used: 0,
+      ai_cost_usd: 0,
+      failed_events: 0,
+      new_users: 0,
+      wallet_credits: 0,
+    };
+    days.push(item);
+    byDay.set(key, item);
+  }
+  const bucket = (value) => byDay.get(String(value || "").slice(0, 10));
+  for (const row of rows || []) {
+    const day = bucket(row.created_at);
+    if (!day) continue;
+    day.usage_events += 1;
+    day.credits_used += Number(row.credits_charged || 0);
+    day.ai_cost_usd += Number(row.estimated_usd_cost || 0);
+    if (row.status === "FAILED") day.failed_events += 1;
+  }
+  for (const row of profiles || []) {
+    const day = bucket(row.created_at);
+    if (day) day.new_users += 1;
+  }
+  for (const row of transactions || []) {
+    const day = bucket(row.created_at);
+    if (day && Number(row.credits_delta || 0) > 0)
+      day.wallet_credits += Number(row.credits_delta || 0);
+  }
+  const support = { OPEN: 0, IN_PROGRESS: 0, RESOLVED: 0, CLOSED: 0 };
+  const requestsByType = { TOPUP: 0, MODEL_CHANGE: 0, SUPPORT: 0 };
+  for (const row of requests || []) {
+    if (row.type in requestsByType) requestsByType[row.type] += 1;
+    if (row.type === "SUPPORT" && row.status in support)
+      support[row.status] += 1;
+  }
+  return { daily: days, support, requests: requestsByType };
+}
 export async function controlRoute(request, env, transport) {
   const url = new URL(request.url),
     path = url.pathname;
@@ -44,8 +105,44 @@ export async function controlRoute(request, env, transport) {
       );
     if (route === "session" && request.method === "GET")
       return response({ profile: identity.profile });
-    if (route === "overview" && request.method === "GET")
-      return response(await db.rpc("rv_admin_overview", { p_admin: uid }));
+    if (route === "overview" && request.method === "GET") {
+      const since = new Date(Date.now() - 29 * 86400000).toISOString();
+      const [summary, usage, requests, transactions, profiles] =
+        await Promise.all([
+          db.rpc("rv_admin_overview", { p_admin: uid }),
+          db.table("revector_usage_events", {
+            select:
+              "created_at,status,credits_charged,estimated_usd_cost,cost_source",
+            event_key: "not.like.request:*",
+            created_at: "gte." + since,
+            order: "created_at.asc",
+            limit: "1000",
+          }),
+          db.table("revector_requests", {
+            select: "created_at,type,status",
+            created_at: "gte." + since,
+            order: "created_at.asc",
+            limit: "1000",
+          }),
+          db.table("revector_wallet_transactions", {
+            select: "created_at,credits_delta,type",
+            created_at: "gte." + since,
+            order: "created_at.asc",
+            limit: "1000",
+          }),
+          db.table("revector_profiles", {
+            select: "created_at",
+            created_at: "gte." + since,
+            order: "created_at.asc",
+            limit: "1000",
+          }),
+        ]);
+      return response({
+        ...summary,
+        charts: dashboardSeries(usage, requests, transactions, profiles),
+        chart_window_days: 30,
+      });
+    }
     if (route === "settings" && request.method === "GET")
       return response({
         credits_per_usd: env.CREDITS_PER_USD
@@ -81,12 +178,38 @@ export async function controlRoute(request, env, transport) {
     }
     if (route === "wallet/adjust" && request.method === "POST") {
       const d = await input(request);
+      let delta;
+      let reason;
+      if (d.credits !== undefined) {
+        const direction = text(d.direction, 12);
+        if (!["ADD", "DEDUCT"].includes(direction))
+          throw new ControlError("INVALID_DIRECTION");
+        const credits = number(Number(d.credits), 0.0001, 1e6);
+        const method = text(d.payment_method, 40);
+        if (!paymentMethods.has(method))
+          throw new ControlError("INVALID_PAYMENT_METHOD");
+        const reference = text(d.transaction_reference, 180);
+        const note = text(d.note || "", 600, false);
+        delta = direction === "ADD" ? credits : -credits;
+        const action =
+          direction === "ADD" ? "Credit recharge" : "Balance deduction";
+        reason =
+          action +
+          " | Method: " +
+          method.replaceAll("_", " ") +
+          " | Transaction: " +
+          reference +
+          (note ? " | Note: " + note : "");
+      } else {
+        delta = number(d.delta, -1e6, 1e6);
+        reason = text(d.reason);
+      }
       return response(
         await db.rpc("rv_adjust_wallet", {
           p_admin: uid,
           p_user: uuid(d.user_id),
-          p_delta: number(d.delta, -1e6, 1e6),
-          p_reason: text(d.reason),
+          p_delta: delta,
+          p_reason: reason,
           p_key: uuid(d.idempotency_key),
         }),
       );
