@@ -375,18 +375,78 @@ function adminContent(page) {
         ]),
       ),
     );
-  if (page === "settings")
+  if (page === "settings") {
+    const settings = d.settings || {};
+    const payment = settings.payment_settings || {};
+    const bkash = payment.bkash || {};
+    const nagad = payment.nagad || {};
+    const paymentForm = form(
+      "payment-settings",
+      '<div class="payment-settings-grid">' +
+        '<section class="payment-config-card rate-card">' +
+          '<div class="payment-config-head"><span>FX</span><div><strong>USD → BDT Conversion</strong><small>This rate is shown live on the user Add Credits page.</small></div></div>' +
+          field(
+            "1 USD = BDT",
+            "usd_to_bdt_rate",
+            "number",
+            payment.usd_to_bdt_rate ?? "",
+            'required min="0.0001" max="10000" step="0.0001"',
+          ) +
+        "</section>" +
+        '<section class="payment-config-card">' +
+          '<div class="payment-config-head bkash"><span>bK</span><div><strong>bKash</strong><small>User-facing manual payment destination.</small></div></div>' +
+          select(
+            "Availability",
+            "bkash_enabled",
+            [["true","Enabled"],["false","Disabled"]],
+            String(Boolean(bkash.enabled)),
+          ) +
+          field("bKash Number", "bkash_number", "text", bkash.number || "", 'maxlength="40" placeholder="No number configured"') +
+          '<label class="account-field"><span>bKash Instructions — one step per line</span><textarea name="bkash_instructions" rows="5" maxlength="2400" placeholder="No instructions configured">' +
+            e(Array.isArray(bkash.instructions) ? bkash.instructions.join("\n") : "") +
+          "</textarea></label>" +
+        "</section>" +
+        '<section class="payment-config-card">' +
+          '<div class="payment-config-head nagad"><span>N</span><div><strong>Nagad</strong><small>User-facing manual payment destination.</small></div></div>' +
+          select(
+            "Availability",
+            "nagad_enabled",
+            [["true","Enabled"],["false","Disabled"]],
+            String(Boolean(nagad.enabled)),
+          ) +
+          field("Nagad Number", "nagad_number", "text", nagad.number || "", 'maxlength="40" placeholder="No number configured"') +
+          '<label class="account-field"><span>Nagad Instructions — one step per line</span><textarea name="nagad_instructions" rows="5" maxlength="2400" placeholder="No instructions configured">' +
+            e(Array.isArray(nagad.instructions) ? nagad.instructions.join("\n") : "") +
+          "</textarea></label>" +
+        "</section>" +
+      "</div>" +
+      '<p class="payment-settings-note">Saving here updates the shared control database. The ReVector user Add Credits page reads these values; no payment number or instruction is hardcoded in the user interface.</p>',
+      "Save Payment Configuration",
+    );
+
     return (
       panel(
+        "Payment Configuration",
+        '<div class="payment-settings-hero"><div><div class="section-kicker">USER TOP-UP CONTROL</div><h3>bKash, Nagad & Conversion Rate</h3><p>Manage exactly what users see when they add balance. Disabled methods cannot be submitted.</p></div>' +
+          (payment.updated_at
+            ? '<span>Last updated ' + date(payment.updated_at) + "</span>"
+            : '<span>Not configured yet</span>') +
+        "</div>" +
+        paymentForm,
+      ) +
+      panel(
         "Control Backend Settings",
-        `<dl class="account-details">${Object.entries(d.settings || {})
-          .map(
-            ([key, value]) =>
-              `<dt>${e(key.replaceAll("_", " "))}</dt><dd>${e(value == null ? "Not configured" : String(value))}</dd>`,
-          )
-          .join(
-            "",
-          )}</dl><p class="muted">Engine and production secrets are managed separately. This console cannot change Railway settings.</p>`,
+        '<dl class="account-details">' +
+          Object.entries(settings)
+            .filter(([key]) => key !== "payment_settings")
+            .map(
+              ([key, value]) =>
+                '<dt>' + e(key.replaceAll("_", " ")) + "</dt><dd>" +
+                e(value == null ? "Not configured" : String(value)) +
+                "</dd>",
+            )
+            .join("") +
+        '</dl><p class="muted">Engine and production secrets are managed separately. This console cannot change Railway settings.</p>',
       ) +
       panel(
         "Model Catalog",
@@ -432,6 +492,7 @@ function adminContent(page) {
           )
         : "")
     );
+  }
   return empty("This console page does not exist.");
 }
 export function accountMarkup() {
