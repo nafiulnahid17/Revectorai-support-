@@ -106,6 +106,7 @@ export async function navigate(path) {
   account.ticket = null;
   account.editUser = null;
   account.editModel = null;
+  account.supportFilter = "ALL";
   account.offset = 0;
   account.data = {};
   await guarded(load);
@@ -116,6 +117,15 @@ export async function click(target) {
   if (action === "nav")
     return navigate(new URL(target.href, location.origin).pathname);
   if (action === "refresh") return guarded(load);
+  if (action === "support-filter") {
+    const value = String(target.dataset.filter || "ALL").toUpperCase();
+    if (!["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].includes(value)) return;
+    account.supportFilter = value;
+    account.ticket = null;
+    account.messages = [];
+    redraw();
+    return;
+  }
   if (action === "next" || action === "previous") {
     account.offset = Math.max(
       0,
