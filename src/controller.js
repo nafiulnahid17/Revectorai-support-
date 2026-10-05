@@ -196,6 +196,7 @@ export async function submit(form) {
       decision: "requests/decide",
       status: "users/status",
       catalog: "models/update",
+      "payment-settings": "settings/payment",
     };
     if (!routes[type]) throw new Error("This action is unavailable.");
     if (type === "adjust") {
@@ -211,6 +212,30 @@ export async function submit(form) {
         throw new Error("Enter a valid operation-prices JSON object.");
       }
       data.enabled = data.enabled === "true";
+    }
+    if (type === "payment-settings") {
+      const instructions = (value) =>
+        String(value || "")
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      data.usd_to_bdt_rate = Number(data.usd_to_bdt_rate);
+      data.bkash = {
+        enabled: data.bkash_enabled === "true",
+        number: String(data.bkash_number || "").trim(),
+        instructions: instructions(data.bkash_instructions),
+      };
+      data.nagad = {
+        enabled: data.nagad_enabled === "true",
+        number: String(data.nagad_number || "").trim(),
+        instructions: instructions(data.nagad_instructions),
+      };
+      delete data.bkash_enabled;
+      delete data.bkash_number;
+      delete data.bkash_instructions;
+      delete data.nagad_enabled;
+      delete data.nagad_number;
+      delete data.nagad_instructions;
     }
     await request("/api/admin/" + routes[type], "POST", data);
     keys.delete(type);
